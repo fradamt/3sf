@@ -1,10 +1,11 @@
-from pyrsistent import PSet, PMap, PVector
+from pyrsistent import PSet
 
 from data_structures import *
 from formal_verification_annotations import *
 from pythonic_code_generic import *
 from common import *
 from stubs import *
+
 
 def is_ancestor_descendant_relationship(ancestor: Block, descendant: Block, node_state: NodeState) -> bool:
     """
@@ -24,6 +25,7 @@ def is_ancestor_descendant_relationship(ancestor: Block, descendant: Block, node
             )
         )
 
+
 def get_set_FFG_targets(votes: PSet[SignedVoteMessage]) -> PSet[Checkpoint]:
     """
     It extracts a set of ffg targets from a set of `votes`.
@@ -32,13 +34,14 @@ def get_set_FFG_targets(votes: PSet[SignedVoteMessage]) -> PSet[Checkpoint]:
         lambda vote: vote.message.ffg_target,
         votes
     )
-    
+
+
 def valid_FFG_vote(vote: SignedVoteMessage, node_state: NodeState) -> bool:
     """
     A FFG vote is valid if:
     - the sender is a validator;
     - `vote.message.ffg_source.block_hash` is an ancestor of `vote.message.ffg_target.block_hash`;
-    - the checkpoint slot of `vote.message.ffg_source` is strictly less than checkpoint slot of `vote.message.ffg_target`;   
+    - the checkpoint slot of `vote.message.ffg_source` is strictly less than checkpoint slot of `vote.message.ffg_target`;
     - the block associated with `vote.message.ffg_source.block_hash` has a slot number that matches the slot number specified in the same vote message;
     - the block associated with `vote.message.ffg_target.block_hash` has a slot number that matches the slot number specified in the same vote message;
     - the block hash associated the source exists within a validator's view of blocks; and
@@ -60,6 +63,7 @@ def valid_FFG_vote(vote: SignedVoteMessage, node_state: NodeState) -> bool:
         get_block_from_hash(vote.message.ffg_target.block_hash, node_state).slot == vote.message.ffg_target.block_slot
     )
 
+
 def is_FFG_vote_in_support_of_checkpoint_justification(vote: SignedVoteMessage, checkpoint: Checkpoint, node_state: NodeState) -> bool:
     """
     It determines whether a given `vote` supports the justification of a specified `checkpoint`.
@@ -77,6 +81,7 @@ def is_FFG_vote_in_support_of_checkpoint_justification(vote: SignedVoteMessage, 
             node_state) and
         is_justified_checkpoint(vote.message.ffg_source, node_state)
     )
+
 
 def filter_out_FFG_votes_not_in_FFG_support_of_checkpoint_justification(votes: PSet[SignedVoteMessage], checkpoint: Checkpoint, node_state: NodeState) -> PSet[SignedVoteMessage]:
     """
@@ -97,8 +102,8 @@ def get_validators_in_FFG_support_of_checkpoint_justification(votes: PSet[Signed
 
 def is_justified_checkpoint(checkpoint: Checkpoint, node_state: NodeState) -> bool:
     """
-    It checks whether a `checkpoint` if justified, specifically a `checkpoint` is justified if at least 
-    two-thirds of the total validator set weight is in support. This is evaluated by checking if 
+    It checks whether a `checkpoint` if justified, specifically a `checkpoint` is justified if at least
+    two-thirds of the total validator set weight is in support. This is evaluated by checking if
     `FFG_support_weight * 3 >= tot_validator_set_weight * 2`.
     """
 
@@ -115,6 +120,7 @@ def is_justified_checkpoint(checkpoint: Checkpoint, node_state: NodeState) -> bo
 
         return FFG_support_weight * 3 >= tot_validator_set_weight * 2
 
+
 def is_FFG_vote_linking_to_a_checkpoint_in_next_slot(vote: SignedVoteMessage, checkpoint: Checkpoint, node_state: NodeState) -> bool:
     """
     It evaluates whether a given `vote` represents a link from a specified `checkpoint` to a checkpoint in the immediately following slot.
@@ -125,11 +131,13 @@ def is_FFG_vote_linking_to_a_checkpoint_in_next_slot(vote: SignedVoteMessage, ch
         vote.message.ffg_target.chkp_slot == checkpoint.chkp_slot + 1
     )
 
-def filter_out_FFG_vote_not_linking_to_a_checkpoint_in_next_slot(checkpoint: Checkpoint, node_state: NodeState) -> PSet[SignedVoteMessage]:  
+
+def filter_out_FFG_vote_not_linking_to_a_checkpoint_in_next_slot(checkpoint: Checkpoint, node_state: NodeState) -> PSet[SignedVoteMessage]:
     """
     It filters and retains only those votes from a `node_state` that are linking to a `checkpoint` in the next slot.
     """
     return pset_filter(lambda vote: is_FFG_vote_linking_to_a_checkpoint_in_next_slot(vote, checkpoint, node_state), node_state.view_votes)
+
 
 def get_validators_in_FFG_votes_linking_to_a_checkpoint_in_next_slot(checkpoint: Checkpoint, node_state) -> PSet[NodeIdentity]:
     """
@@ -140,12 +148,13 @@ def get_validators_in_FFG_votes_linking_to_a_checkpoint_in_next_slot(checkpoint:
         filter_out_FFG_vote_not_linking_to_a_checkpoint_in_next_slot(checkpoint, node_state)
     )
 
+
 def is_finalized_checkpoint(checkpoint: Checkpoint, node_state: NodeState) -> bool:
     """
-    It evaluates whether a given `checkpoint` has been finalized. A `checkpoint` is considered finalized if it is justified and 
-    if at least two-thirds of the total validator set's weight supports the transition from this `checkpoint` to the next. Specifically, it first checks if the `checkpoint` is justified using 
-    `is_justified_checkpoint(checkpoint, node_state)`. Then it retrieves the set of validators and their balances for the slot associated with the `checkpoint`. 
-    This is done through `get_validator_set_for_slot`. Then it calculates the total weight (stake) of validators who have cast votes 
+    It evaluates whether a given `checkpoint` has been finalized. A `checkpoint` is considered finalized if it is justified and
+    if at least two-thirds of the total validator set's weight supports the transition from this `checkpoint` to the next. Specifically, it first checks if the `checkpoint` is justified using
+    `is_justified_checkpoint(checkpoint, node_state)`. Then it retrieves the set of validators and their balances for the slot associated with the `checkpoint`.
+    This is done through `get_validator_set_for_slot`. Then it calculates the total weight (stake) of validators who have cast votes
     linking the `checkpoint` to the next slot, using `get_validators_in_FFG_votes_linking_to_a_checkpoint_in_next_slot` to identify these validators
     and `validator_set_weight` to sum their stakes. Finally it checks if `FFG_support_weight * 3 >= tot_validator_set_weight * 2` to finalize `checkpoint`.
     """
@@ -158,11 +167,13 @@ def is_finalized_checkpoint(checkpoint: Checkpoint, node_state: NodeState) -> bo
 
     return FFG_support_weight * 3 >= tot_validator_set_weight * 2
 
+
 def filter_out_non_finalized_checkpoint(checkpoints: PSet[Checkpoint], node_state: NodeState) -> PSet[Checkpoint]:
     """
     It filters out non finalized `checkpoints` from a `node_state`.
     """
     return pset_filter(lambda checkpoint: is_finalized_checkpoint(checkpoint, node_state), checkpoints)
+
 
 def get_finalized_checkpoints(node_state: NodeState) -> PSet[Checkpoint]:
     """
@@ -172,6 +183,7 @@ def get_finalized_checkpoints(node_state: NodeState) -> PSet[Checkpoint]:
         filter_out_non_finalized_checkpoint(get_set_FFG_targets(node_state.view_votes), node_state),
         genesis_checkpoint(node_state)
     )
+
 
 def get_greatest_finalized_checkpoint(node_state: NodeState) -> Checkpoint:
     """
