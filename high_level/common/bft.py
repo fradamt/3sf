@@ -120,6 +120,7 @@ def is_justified_checkpoint(checkpoint: Checkpoint, node_state: CommonNodeState)
 
         return FFG_support_weight * 3 >= tot_validator_set_weight * 2
 
+
 def filter_out_non_justified_checkpoint(checkpoints: PSet[Checkpoint], node_state: CommonNodeState) -> PSet[Checkpoint]:
     """
     It filters out `checkpoints` that are not justified.
@@ -157,6 +158,7 @@ def filter_out_blocks_non_ancestor_of_block(block: Block, blocks: PSet[Block], n
         lambda b: is_ancestor_descendant_relationship(b, block, node_state.common),
         blocks
     )
+
 
 def is_FFG_vote_linking_to_a_checkpoint_in_next_slot(vote: SignedVoteMessage, checkpoint: Checkpoint, node_state: CommonNodeState) -> bool:
     """

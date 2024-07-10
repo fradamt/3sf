@@ -37,8 +37,9 @@ def pset_merge_flatten(s: PSet[PSet[T1]]) -> PSet[T1]:
         lambda a, b: a.union(b),
         s
     )
-    
-print(pset_merge_flatten(pset([pset([1,2]),pset([2,3])])))
+
+
+print(pset_merge_flatten(pset([pset([1, 2]), pset([2, 3])])))
 
 
 def pset_intersection(s1: PSet[T1], s2: PSet[T1]) -> PSet[T1]:

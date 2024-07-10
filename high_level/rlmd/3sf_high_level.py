@@ -24,7 +24,7 @@ from .helpers import *
 @Event
 def on_tick(node_state: NodeState, time: int) -> NewNodeStateAndMessagesToTx:
     """
-    Manages the transition of the system's state, making changes in both the current slot and the phase. 
+    Manages the transition of the system's state, making changes in both the current slot and the phase.
     Upon initiating a new phase, it activates one of four distinct events based on the phase transition:
     - `on_propose`: Triggered at the start of a new slot, signaling that a designated proposer should submit a new block.
     - `on_vote`: Indicates that validators are now expected to cast their votes in support of a proposed block.
@@ -56,9 +56,9 @@ def on_tick(node_state: NodeState, time: int) -> NewNodeStateAndMessagesToTx:
 
 def on_propose(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     """
-    A validator acting as a proposer first merges its buffer with its local view using the `execute_view_merge` function. 
+    A validator acting as a proposer first merges its buffer with its local view using the `execute_view_merge` function.
     This step prepares the validator to propose a new block, generated through `get_new_block`.
-    Next, the proposer constructs a new proposal `signed_propose` by signing the block together with its local view. 
+    Next, the proposer constructs a new proposal `signed_propose` by signing the block together with its local view.
     Finally, the validator broadcasts such proposal.
     """
     proposer = get_proposer(node_state.common)
@@ -90,12 +90,12 @@ def on_propose(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
 
 def on_vote(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     """
-    A validator in the role of a voter begins by identifying the current tip of the canonical blockchain using the `get_head` function. 
-    The validator then filters through its confirmation candidates, removing any that conflict with the `get_head` output, while also 
+    A validator in the role of a voter begins by identifying the current tip of the canonical blockchain using the `get_head` function.
+    The validator then filters through its confirmation candidates, removing any that conflict with the `get_head` output, while also
     including the greatest justified checkpoint.
-    The candidate block, `bcand`, is determined as the max among the confirmation candidates and the greatest justified checkpoint. 
+    The candidate block, `bcand`, is determined as the max among the confirmation candidates and the greatest justified checkpoint.
     The validator then considers the k deep prefix from the canonical chain's tip, referred to as `k_deep_block`, and compares it with `bcand`.
-    The next step involves updating the validator's available chain, `node_state.chava`, to reflect the max between `bcand` and `k_deep_block`, provided neither are ancestors of `node_state.chava`. 
+    The next step involves updating the validator's available chain, `node_state.chava`, to reflect the max between `bcand` and `k_deep_block`, provided neither are ancestors of `node_state.chava`.
     Finally, the validator casts a vote, specifying the `get_greatest_justified_checkpoint` as the source checkpoint and defining the target checkpoint based on `node_state.chava`, the current slot, and the slot of `chAva`.
     """
     ch = get_head(node_state)
@@ -149,8 +149,8 @@ def on_vote(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
 
 def on_confirm(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     """
-    A validator refines its set of confirmation candidates, specifically, the set `s_cand` of blocks that garnered over two-thirds 
-    of the votes during the NodePhase.VOTE stage.    
+    A validator refines its set of confirmation candidates, specifically, the set `s_cand` of blocks that garnered over two-thirds
+    of the votes during the NodePhase.VOTE stage.
     """
     return NewNodeStateAndMessagesToTx(
         state=node_state.set(
@@ -181,8 +181,8 @@ def on_merge(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
 @Event
 def on_received_propose(propose: SignedProposeMessage, node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     """
-    A validator merges the proposer's view with its own local view upon receiving a proposal within the timeframe from 
-    4Δt to 4Δt+Δ, preparing it for the phase NodePhase.VOTE.    
+    A validator merges the proposer's view with its own local view upon receiving a proposal within the timeframe from
+    4Δt to 4Δt+Δ, preparing it for the phase NodePhase.VOTE.
     """
     node_state = node_state.set(
         buffer_blocks=pmap_set(
@@ -208,7 +208,7 @@ def on_received_propose(propose: SignedProposeMessage, node_state: NodeState) ->
 @Event
 def on_block_received(block: Block, node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     """
-    A validator, upon receiving a `block` at any moment, adds it to its local buffer `node_state.buffer_blocks`.    
+    A validator, upon receiving a `block` at any moment, adds it to its local buffer `node_state.buffer_blocks`.
     """
     return NewNodeStateAndMessagesToTx(
         state=node_state.set(
@@ -225,7 +225,7 @@ def on_block_received(block: Block, node_state: NodeState) -> NewNodeStateAndMes
 @Event
 def on_vote_received(vote: SignedVoteMessage, node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     """
-    A validator, upon receiving a `vote` at any moment, adds it to its local buffer `node_state.buffer_votes`.    
+    A validator, upon receiving a `vote` at any moment, adds it to its local buffer `node_state.buffer_votes`.
     """
     return NewNodeStateAndMessagesToTx(
         state=node_state.set(

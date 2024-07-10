@@ -82,7 +82,8 @@ class Configuration():
     genesis: Block
     eta: int
     k: int
-    
+
+
 class CommonNodeState(PRecord):
     configuration: Configuration = field(type=Configuration)
     identity: NodeIdentity = field(type=NodeIdentity)
@@ -90,5 +91,6 @@ class CommonNodeState(PRecord):
     view_blocks: PMap[Hash, Block] = field()  # Using field(type=dict[Hash,Block]) raises a max stack depth rec. error in execution. Same for sets below
     view_votes: PSet[SignedVoteMessage] = field()
     chava: Block = field()
+
 
 BlockView = PMap[Hash, Block]

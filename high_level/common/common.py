@@ -5,6 +5,7 @@ from .formal_verification_annotations import *
 from .pythonic_code_generic import *
 from .stubs import *
 
+
 def genesis_checkpoint(node_state: CommonNodeState) -> Checkpoint:
     """
     It defines the genesis block.
@@ -37,6 +38,7 @@ def has_parent(block: Block, node_state: CommonNodeState) -> bool:
     """
     return has_block_hash(block.parent_hash, node_state)
 
+
 def get_parent(block: Block, node_state: CommonNodeState) -> Block:
     """
     It retrieves the parent of a given `block`.
@@ -51,6 +53,7 @@ def get_all_blocks(node_state: CommonNodeState) -> PSet[Block]:
     """
     return pmap_values(node_state.view_blocks)
 
+
 def is_complete_chain(block: Block, node_state: CommonNodeState) -> bool:
     """
     It checks if a given `block` is part of a complete chain of blocks that reaches back to the genesis block `node_state.configuration.genesis`
@@ -62,7 +65,8 @@ def is_complete_chain(block: Block, node_state: CommonNodeState) -> bool:
         return False
     else:
         return is_complete_chain(get_parent(block, node_state), node_state)
-    
+
+
 def is_validator(node: NodeIdentity, validatorBalances: ValidatorBalances) -> bool:
     """
     It checks whether a `node` is a validator.
@@ -83,7 +87,8 @@ def validator_set_weight(validators: PSet[NodeIdentity], validatorBalances: Vali
             )
         )
     )
-    
+
+
 def get_blockchain(block: Block, node_state: CommonNodeState) -> PVector[Block]:
     """
     It constructs a blockchain from a given `block` back to the genesis block,
