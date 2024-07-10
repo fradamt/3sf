@@ -1,6 +1,6 @@
 from pyrsistent import PSet, PMap, PVector
 
-from .rlmd_data_structures import *
+from .data_structures import *
 from ..common.formal_verification_annotations import *
 from ..common.pythonic_code_generic import *
 from ..common.common import *
