@@ -232,3 +232,43 @@ def get_greatest_finalized_checkpoint(node_state: CommonNodeState) -> Checkpoint
         get_finalized_checkpoints(node_state),
         lambda c: c.chkp_slot
     )
+
+
+def are_equivocating_votes(vote1: SignedVoteMessage, vote2: SignedVoteMessage) -> bool:
+    return (
+        verify_vote_signature(vote1) and
+        verify_vote_signature(vote2) and
+        vote1.sender == vote2.sender and
+        vote1 != vote2 and
+        vote1.message.ffg_target.chkp_slot == vote2.message.ffg_target.chkp_slot
+    )
+
+
+def does_first_vote_surround_second_vote(vote1: SignedVoteMessage, vote2: SignedVoteMessage) -> bool:
+    return (
+        verify_vote_signature(vote1) and
+        verify_vote_signature(vote2) and
+        vote1.sender == vote2.sender and
+        (vote1.message.ffg_source.chkp_slot, vote1.message.ffg_source.block_slot) < (vote2.message.ffg_source.chkp_slot, vote2.message.ffg_source.block_slot) and
+        vote2.message.ffg_target.chkp_slot < vote1.message.ffg_target.chkp_slot
+    )
+
+
+def is_slashable_offence(vote1: SignedVoteMessage, vote2: SignedVoteMessage) -> bool:
+    return (
+        are_equivocating_votes(vote1, vote2) or
+        does_first_vote_surround_second_vote(vote1, vote2) or
+        does_first_vote_surround_second_vote(vote2, vote1)
+    )
+
+
+def is_slashable_node(node: NodeIdentity, vote1: SignedVoteMessage, vote2: SignedVoteMessage) -> bool:
+    return (
+        node == vote1.sender and
+        is_slashable_offence(vote1, vote2)
+    )
+
+
+def get_slashabe_nodes(vote_view: PSet[SignedVoteMessage]) -> PSet[NodeIdentity]:
+    return pset_map(lambda vote: vote.sender,
+                    pset_filter(lambda vote1: not pset_is_empty(pset_filter(lambda vote2: is_slashable_offence(vote1, vote2), vote_view)), vote_view))
