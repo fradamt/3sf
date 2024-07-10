@@ -1,11 +1,11 @@
 from pyrsistent import PSet, PMap, PVector
 
-from data_structures import *
-from formal_verification_annotations import *
-from pythonic_code_generic import *
-from common import *
-from bft import *
-from stubs import *
+from ..common.data_structures import *
+from ..common.formal_verification_annotations import *
+from ..common.pythonic_code_generic import *
+from ..common.common import *
+from ..common.bft import *
+from ..common.stubs import *
 
 
 def get_slot_from_time(time: int, node_state: NodeState) -> int:

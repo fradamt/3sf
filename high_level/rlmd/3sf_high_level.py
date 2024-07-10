@@ -1,8 +1,8 @@
-from data_structures import *
-from formal_verification_annotations import *
-from pythonic_code_generic import *
-from stubs import *
-from helpers import *
+from ..common.data_structures import *
+from ..common.formal_verification_annotations import *
+from ..common.pythonic_code_generic import *
+from ..common.stubs import *
+from .helpers import *
 
 # @Init
 # def init() -> NodeState:

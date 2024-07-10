@@ -1,10 +1,10 @@
 from pyrsistent import PSet
 
-from data_structures import *
-from formal_verification_annotations import *
-from pythonic_code_generic import *
-from common import *
-from stubs import *
+from .data_structures import *
+from .formal_verification_annotations import *
+from .pythonic_code_generic import *
+from .common import *
+from .stubs import *
 
 
 def is_ancestor_descendant_relationship(ancestor: Block, descendant: Block, node_state: NodeState) -> bool:

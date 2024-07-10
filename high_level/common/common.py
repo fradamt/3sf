@@ -1,9 +1,9 @@
 from pyrsistent import PSet, PMap, PVector
 
-from data_structures import *
-from formal_verification_annotations import *
-from pythonic_code_generic import *
-from stubs import *
+from .data_structures import *
+from .formal_verification_annotations import *
+from .pythonic_code_generic import *
+from .stubs import *
 
 def genesis_checkpoint(node_state: NodeState) -> Checkpoint:
     """

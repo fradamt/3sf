@@ -1,7 +1,7 @@
 from typing import TypeVar
 
 from pyrsistent import PSet, PMap, PVector, pset, pmap, pvector
-from formal_verification_annotations import *
+from .formal_verification_annotations import *
 from functools import reduce
 
 T1 = TypeVar('T1')
