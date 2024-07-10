@@ -61,7 +61,7 @@ def on_propose(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     Next, the proposer constructs a new proposal `signed_propose` by signing the block together with its local view. 
     Finally, the validator broadcasts such proposal.
     """
-    proposer = get_proposer(node_state)
+    proposer = get_proposer(node_state.common)
 
     if proposer == node_state.identity:
         node_state = execute_view_merge(node_state)
@@ -71,7 +71,7 @@ def on_propose(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
                 block=get_new_block(node_state),
                 proposer_view=get_votes_to_include_in_propose_message_view(node_state)
             ),
-            node_state
+            node_state.common
         )
 
         return NewNodeStateAndMessagesToTx(
@@ -103,9 +103,9 @@ def on_vote(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
         filter_out_blocks_non_ancestor_of_block(
             ch,
             node_state.s_cand,
-            node_state
+            node_state.common
         ),
-        get_block_from_hash(get_greatest_justified_checkpoint(node_state).block_hash, node_state)
+        get_block_from_hash(get_greatest_justified_checkpoint(node_state.common).block_hash, node_state.common)
     )
 
     bcand = pset_max(s_cand, lambda b: b.slot)
@@ -113,8 +113,8 @@ def on_vote(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     k_deep_block = get_block_k_deep(ch, node_state.configuration.k, node_state)
 
     if not (
-        is_ancestor_descendant_relationship(bcand, node_state.chava, node_state) and
-        is_ancestor_descendant_relationship(k_deep_block, node_state.chava, node_state)
+        is_ancestor_descendant_relationship(bcand, node_state.chava, node_state.common) and
+        is_ancestor_descendant_relationship(k_deep_block, node_state.chava, node_state.common)
     ):
         node_state = node_state.set(
             chAva=pset_max(
@@ -130,14 +130,14 @@ def on_vote(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
         VoteMessage(
             slot=node_state.current_slot,
             head_hash=block_hash(get_head(node_state)),
-            ffg_source=get_greatest_justified_checkpoint(node_state),
+            ffg_source=get_greatest_justified_checkpoint(node_state.common),
             ffg_target=Checkpoint(
                 block_hash=block_hash(node_state.chava),
                 chkp_slot=node_state.current_slot,
                 block_slot=node_state.chava.slot
             )
         ),
-        node_state
+        node_state.common
     )
 
     return NewNodeStateAndMessagesToTx(
@@ -157,7 +157,7 @@ def on_confirm(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
             s_cand=pset_merge(
                 node_state.s_cand,
                 filter_out_not_confirmed(
-                    get_all_blocks(node_state),
+                    get_all_blocks(node_state.common),
                     node_state
                 )
             )
@@ -246,10 +246,10 @@ def finalized_chain(node_state: NodeState) -> PVector[Block]:
     """
     return get_blockchain(
         get_block_from_hash(
-            get_greatest_finalized_checkpoint(node_state).block_hash,
-            node_state
+            get_greatest_finalized_checkpoint(node_state.common).block_hash,
+            node_state.common
         ),
-        node_state
+        node_state.common
     )
 
 
@@ -260,5 +260,5 @@ def available_chain(node_state: NodeState) -> PVector[Block]:
     """
     return get_blockchain(
         node_state.chava,
-        node_state
+        node_state.common
     )

@@ -1,6 +1,6 @@
 from pyrsistent import PSet, PMap, PVector
 
-from ..common.data_structures import *
+from .rlmd_data_structures import *
 from ..common.formal_verification_annotations import *
 from ..common.pythonic_code_generic import *
 from ..common.common import *
@@ -12,77 +12,23 @@ def get_slot_from_time(time: int, node_state: NodeState) -> int:
     """
     It calculates the slot number based on a given `time` and the node's configuration settings.
     """
-    return time // (4 * node_state.configuration.delta)
+    return time // (4 * node_state.common.configuration.delta)
 
 
 def get_phase_from_time(time: int, node_state: NodeState) -> NodePhase:
     """
     It calculates the phase within a slot based on a given `time` and the node's configuration settings.
     """
-    time_in_slot = time % (4 * node_state.configuration.delta)
+    time_in_slot = time % (4 * node_state.common.configuration.delta)
 
-    if time_in_slot >= 3 * node_state.configuration.delta:
+    if time_in_slot >= 3 * node_state.common.configuration.delta:
         return NodePhase.MERGE
-    elif time_in_slot >= 2 * node_state.configuration.delta:
+    elif time_in_slot >= 2 * node_state.common.configuration.delta:
         return NodePhase.CONFIRM
-    elif time_in_slot >= node_state.configuration.delta:
+    elif time_in_slot >= node_state.common.configuration.delta:
         return NodePhase.VOTE
     else:
         return NodePhase.PROPOSE
-
-
-def get_blockchain(block: Block, node_state: NodeState) -> PVector[Block]:
-    """
-    It constructs a blockchain from a given `block` back to the genesis block,
-    assuming the given `block` is part of a complete chain.
-    """
-    Requires(is_complete_chain(block, node_state))
-    if block == node_state.configuration.genesis:
-        return pvector_of_one_element(block)
-    else:
-        return pvector_concat(
-            pvector_of_one_element(block),
-            get_blockchain(get_parent(block, node_state), node_state)
-        )
-
-
-def filter_out_non_justified_checkpoint(checkpoints: PSet[Checkpoint], node_state: NodeState) -> PSet[Checkpoint]:
-    """
-    It filters out `checkpoints` that are not justified.
-    """
-    return pset_filter(lambda checkpoint: is_justified_checkpoint(checkpoint, node_state), checkpoints)
-
-
-def get_justified_checkpoints(node_state: NodeState) -> PSet[Checkpoint]:
-    """
-    It retrieves all the justified checkpoints from a `note_state`. First it extracts all ffg target checkpoints from
-    the set of votes in the `node_state`. Then it filter out these checkpoints to keep only those that are justified.
-    The `genesis_checkpoint` is automatically considered justified.
-    """
-    return pset_add(
-        filter_out_non_justified_checkpoint(get_set_FFG_targets(node_state.view_votes), node_state),
-        genesis_checkpoint(node_state)
-    )
-
-
-def get_greatest_justified_checkpoint(node_state: NodeState) -> Checkpoint:
-    """
-    It retrieves the greatest justified checkpoint from a `node_state`.
-    """
-    return pset_max(
-        get_justified_checkpoints(node_state),
-        lambda c: (c.chkp_slot, c.block_slot)
-    )
-
-
-def filter_out_blocks_non_ancestor_of_block(block: Block, blocks: PSet[Block], node_state: NodeState) -> PSet[Block]:
-    """
-    It filters a set of `blocks`, retaining only those that are ancestors of a specified `block`.
-    """
-    return pset_filter(
-        lambda b: is_ancestor_descendant_relationship(b, block, node_state),
-        blocks
-    )
 
 
 def filter_out_GHOST_votes_non_descendant_of_block(block: Block, votes: PSet[SignedVoteMessage], node_state: NodeState) -> PSet[SignedVoteMessage]:
@@ -91,11 +37,11 @@ def filter_out_GHOST_votes_non_descendant_of_block(block: Block, votes: PSet[Sig
     """
     return pset_filter(
         lambda vote:
-            has_block_hash(vote.message.head_hash, node_state) and
+            has_block_hash(vote.message.head_hash, node_state.common) and
             is_ancestor_descendant_relationship(
                 block,
-                get_block_from_hash(vote.message.head_hash, node_state),
-                node_state
+                get_block_from_hash(vote.message.head_hash, node_state.common.common),
+                node_state.common
             ),
         votes
     )
@@ -106,11 +52,11 @@ def is_GHOST_vote_for_block_in_blockchain(vote: SignedVoteMessage, blockchainHea
     It evaluates whether a given `vote` is for a block that is part of the blockchain ending at a specified "head" block (`blockchainHead`).
     """
     return (
-        has_block_hash(vote.message.head_hash, node_state) and
+        has_block_hash(vote.message.head_hash, node_state.common) and
         is_ancestor_descendant_relationship(
-            get_block_from_hash(vote.message.head_hash, node_state),
+            get_block_from_hash(vote.message.head_hash, node_state.common.common),
             blockchainHead,
-            node_state)
+            node_state.common)
     )
 
 
@@ -200,16 +146,16 @@ def valid_vote(vote: SignedVoteMessage, node_state: NodeState) -> bool:
     """
     return (
         verify_vote_signature(vote) and
-        valid_FFG_vote(vote, node_state) and
-        has_block_hash(vote.message.head_hash, node_state) and
-        is_complete_chain(get_block_from_hash(vote.message.head_hash, node_state), node_state) and
+        valid_FFG_vote(vote, node_state.common) and
+        has_block_hash(vote.message.head_hash, node_state.common) and
+        is_complete_chain(get_block_from_hash(vote.message.head_hash, node_state.common), node_state.common.common) and
         is_validator(
             vote.sender,
-            get_validator_set_for_slot(get_block_from_hash(vote.message.head_hash, node_state), vote.message.slot, node_state)) and
+            get_validator_set_for_slot(get_block_from_hash(vote.message.head_hash, node_state.common), vote.message.slot, node_state.common.common)) and
         is_ancestor_descendant_relationship(
-            get_block_from_hash(vote.message.ffg_target.block_hash, node_state),
-            get_block_from_hash(vote.message.head_hash, node_state),
-            node_state)
+            get_block_from_hash(vote.message.ffg_target.block_hash, node_state.common.common),
+            get_block_from_hash(vote.message.head_hash, node_state.common.common),
+            node_state.common)
     )
 
 
@@ -221,10 +167,10 @@ def filter_out_invalid_votes(votes: PSet[SignedVoteMessage], node_state: NodeSta
 
 
 def get_votes_included_in_blockchain(block: Block, node_state: NodeState) -> PSet[SignedVoteMessage]:
-    if block == node_state.configuration.genesis or not has_block_hash(block.parent_hash, node_state):
+    if block == node_state.common.configuration.genesis or not has_block_hash(block.parent_hash, node_state.common):
         return block.votes
     else:
-        return pset_merge(block.votes, get_votes_included_in_blockchain(get_block_from_hash(block.parent_hash, node_state), node_state))
+        return pset_merge(block.votes, get_votes_included_in_blockchain(get_block_from_hash(block.parent_hash, node_state.common), node_state))
 
 
 def get_votes_included_in_blocks(blocks: PSet[Block]) -> PSet[SignedVoteMessage]:
@@ -258,7 +204,7 @@ def get_new_block(node_state: NodeState) -> Block:
     head_block = get_head(node_state)
     return Block(
         parent_hash=block_hash(head_block),
-        body=get_block_body(node_state),
+        body=get_block_body(node_state.common),
         slot=node_state.current_slot,
         votes=votes_to_include_in_proposed_block(node_state)
     )
@@ -274,7 +220,7 @@ def get_votes_to_include_in_propose_message_view(node_state: NodeState) -> PVect
     return from_set_to_pvector(
         filter_out_GHOST_votes_for_blocks_in_blockchain(
             filter_out_GHOST_votes_non_descendant_of_block(
-                get_block_from_hash(get_greatest_justified_checkpoint(node_state).block_hash, node_state),
+                get_block_from_hash(get_greatest_justified_checkpoint(node_state.common).block_hash, node_state.common.common),
                 filter_out_expired_GHOST_votes(
                     filter_out_invalid_votes(node_state.view_votes, node_state),
                     node_state
@@ -297,11 +243,11 @@ def get_GHOST_weight(block: Block, votes: PSet[SignedVoteMessage], node_state: N
             lambda vote: validatorBalances[vote.sender],
             pset_filter(
                 lambda vote:
-                    has_block_hash(vote.message.head_hash, node_state) and  # Perhaps not needed
+                    has_block_hash(vote.message.head_hash, node_state.common) and  # Perhaps not needed
                     is_ancestor_descendant_relationship(
                         block,
-                        get_block_from_hash(vote.message.head_hash, node_state),
-                        node_state) and
+                        get_block_from_hash(vote.message.head_hash, node_state.common),
+                        node_state.common) and
                     is_validator(vote.sender, validatorBalances),
                 votes
             )
@@ -315,7 +261,7 @@ def get_children(block: Block, node_state: NodeState) -> PSet[Block]:
     """
     return pset_filter(
         lambda b: b.parent_hash == block_hash(block),
-        get_all_blocks(node_state)
+        get_all_blocks(node_state.common)
     )
 
 
@@ -343,7 +289,7 @@ def get_head(node_state: NodeState) -> Block:
     and it outputs the head of the canonical chain with the largest associated total stake among such `relevant_votes`.
     """
     relevant_votes: PSet[SignedVoteMessage] = filter_out_GHOST_votes_non_descendant_of_block(  # Do we really need this given that we start find_head from GJ?
-        get_block_from_hash(get_greatest_justified_checkpoint(node_state).block_hash, node_state),
+        get_block_from_hash(get_greatest_justified_checkpoint(node_state.common).block_hash, node_state.common.common),
         filter_out_non_LMD_GHOST_votes(
             filter_out_expired_GHOST_votes(
                 filter_out_GHOST_equivocating_votes(
@@ -360,13 +306,13 @@ def get_head(node_state: NodeState) -> Block:
     )
 
     validatorBalances = get_validator_set_for_slot(
-        get_block_from_hash(get_greatest_justified_checkpoint(node_state).block_hash, node_state),
+        get_block_from_hash(get_greatest_justified_checkpoint(node_state.common).block_hash, node_state.common),
         node_state.current_slot,
-        node_state
+        node_state.common
     )
 
     return find_head_from(
-        get_block_from_hash(get_greatest_justified_checkpoint(node_state).block_hash, node_state),
+        get_block_from_hash(get_greatest_justified_checkpoint(node_state.common).block_hash, node_state.common),
         relevant_votes,
         node_state,
         validatorBalances
@@ -385,7 +331,7 @@ def execute_view_merge(node_state: NodeState) -> NodeState:
             node_state.view_votes,
             node_state.buffer_votes
         ),
-        get_votes_included_in_blocks(get_all_blocks(node_state)))
+        get_votes_included_in_blocks(get_all_blocks(node_state.common)))
     )
     node_state = node_state.set(buffer_vote=pset_get_empty())
     node_state = node_state.set(buffer_blocks=pmap_get_empty())
@@ -396,26 +342,26 @@ def get_block_k_deep(blockHead: Block, k: int, node_state: NodeState) -> Block:
     """
     It identifies the block that is `k` blocks back from the tip of the canonical chain, or the genesis block `node_state.configuration.genesis`.
     """
-    Requires(is_complete_chain(blockHead, node_state))
+    Requires(is_complete_chain(blockHead, node_state.common))
     if k <= 0 or blockHead == node_state.configuration.genesis:
         return blockHead
     else:
-        return get_block_k_deep(get_parent(blockHead, node_state), k - 1, node_state)
+        return get_block_k_deep(get_parent(blockHead, node_state.common), k - 1, node_state)
 
 
 def is_confirmed(block: Block, node_state: NodeState) -> bool:
     head_block = get_head(node_state)
 
     validatorBalances = get_validator_set_for_slot(
-        get_block_from_hash(get_greatest_justified_checkpoint(node_state).block_hash, node_state),
+        get_block_from_hash(get_greatest_justified_checkpoint(node_state.common).block_hash, node_state.common),
         node_state.current_slot,
-        node_state
+        node_state.common
     )
 
     tot_validator_set_weight = validator_set_weight(pmap_keys(validatorBalances), validatorBalances)
 
     return (
-        is_ancestor_descendant_relationship(block, head_block, node_state) and
+        is_ancestor_descendant_relationship(block, head_block, node_state.common) and
         get_GHOST_weight(block, node_state.view_votes, node_state, validatorBalances) * 3 >= tot_validator_set_weight * 2
     )
 

@@ -5,7 +5,7 @@ from .formal_verification_annotations import *
 from .pythonic_code_generic import *
 from .stubs import *
 
-def genesis_checkpoint(node_state: NodeState) -> Checkpoint:
+def genesis_checkpoint(node_state: CommonNodeState) -> Checkpoint:
     """
     It defines the genesis block.
     """
@@ -16,14 +16,14 @@ def genesis_checkpoint(node_state: NodeState) -> Checkpoint:
     )
 
 
-def has_block_hash(block_hash: Hash, node_state: NodeState) -> bool:
+def has_block_hash(block_hash: Hash, node_state: CommonNodeState) -> bool:
     """
     It checks if a given `block_hash` is present within a `node_state`.
     """
     return pmap_has(node_state.view_blocks, block_hash)
 
 
-def get_block_from_hash(block_hash: Hash, node_state: NodeState) -> Block:
+def get_block_from_hash(block_hash: Hash, node_state: CommonNodeState) -> Block:
     """
     It retrieves the block associated to a `block_hash`.
     """
@@ -31,13 +31,13 @@ def get_block_from_hash(block_hash: Hash, node_state: NodeState) -> Block:
     return pmap_get(node_state.view_blocks, block_hash)
 
 
-def has_parent(block: Block, node_state: NodeState) -> bool:
+def has_parent(block: Block, node_state: CommonNodeState) -> bool:
     """
     It checks whether a `block` has a parent.
     """
     return has_block_hash(block.parent_hash, node_state)
 
-def get_parent(block: Block, node_state: NodeState) -> Block:
+def get_parent(block: Block, node_state: CommonNodeState) -> Block:
     """
     It retrieves the parent of a given `block`.
     """
@@ -45,13 +45,13 @@ def get_parent(block: Block, node_state: NodeState) -> Block:
     return get_block_from_hash(block.parent_hash, node_state)
 
 
-def get_all_blocks(node_state: NodeState) -> PSet[Block]:
+def get_all_blocks(node_state: CommonNodeState) -> PSet[Block]:
     """
     It retrieves all the blocks in a `node_state`.
     """
     return pmap_values(node_state.view_blocks)
 
-def is_complete_chain(block: Block, node_state: NodeState) -> bool:
+def is_complete_chain(block: Block, node_state: CommonNodeState) -> bool:
     """
     It checks if a given `block` is part of a complete chain of blocks that reaches back to the genesis block `node_state.configuration.genesis`
     within a `node_state`.
@@ -83,3 +83,17 @@ def validator_set_weight(validators: PSet[NodeIdentity], validatorBalances: Vali
             )
         )
     )
+    
+def get_blockchain(block: Block, node_state: CommonNodeState) -> PVector[Block]:
+    """
+    It constructs a blockchain from a given `block` back to the genesis block,
+    assuming the given `block` is part of a complete chain.
+    """
+    Requires(is_complete_chain(block, node_state))
+    if block == node_state.configuration.genesis:
+        return pvector_of_one_element(block)
+    else:
+        return pvector_concat(
+            pvector_of_one_element(block),
+            get_blockchain(get_parent(block, node_state), node_state)
+        )

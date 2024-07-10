@@ -7,7 +7,7 @@ from .common import *
 from .stubs import *
 
 
-def is_ancestor_descendant_relationship(ancestor: Block, descendant: Block, node_state: NodeState) -> bool:
+def is_ancestor_descendant_relationship(ancestor: Block, descendant: Block, node_state: CommonNodeState) -> bool:
     """
     It determines whether there is an ancestor-descendant relationship between two blocks.
     """
@@ -36,7 +36,7 @@ def get_set_FFG_targets(votes: PSet[SignedVoteMessage]) -> PSet[Checkpoint]:
     )
 
 
-def valid_FFG_vote(vote: SignedVoteMessage, node_state: NodeState) -> bool:
+def valid_FFG_vote(vote: SignedVoteMessage, node_state: CommonNodeState) -> bool:
     """
     A FFG vote is valid if:
     - the sender is a validator;
@@ -64,7 +64,7 @@ def valid_FFG_vote(vote: SignedVoteMessage, node_state: NodeState) -> bool:
     )
 
 
-def is_FFG_vote_in_support_of_checkpoint_justification(vote: SignedVoteMessage, checkpoint: Checkpoint, node_state: NodeState) -> bool:
+def is_FFG_vote_in_support_of_checkpoint_justification(vote: SignedVoteMessage, checkpoint: Checkpoint, node_state: CommonNodeState) -> bool:
     """
     It determines whether a given `vote` supports the justification of a specified `checkpoint`.
     """
@@ -83,14 +83,14 @@ def is_FFG_vote_in_support_of_checkpoint_justification(vote: SignedVoteMessage, 
     )
 
 
-def filter_out_FFG_votes_not_in_FFG_support_of_checkpoint_justification(votes: PSet[SignedVoteMessage], checkpoint: Checkpoint, node_state: NodeState) -> PSet[SignedVoteMessage]:
+def filter_out_FFG_votes_not_in_FFG_support_of_checkpoint_justification(votes: PSet[SignedVoteMessage], checkpoint: Checkpoint, node_state: CommonNodeState) -> PSet[SignedVoteMessage]:
     """
     It filters out ffg votes that do not support the justification of a specified `checkpoint`.
     """
     return pset_filter(lambda vote: is_FFG_vote_in_support_of_checkpoint_justification(vote, checkpoint, node_state), votes)
 
 
-def get_validators_in_FFG_support_of_checkpoint_justification(votes: PSet[SignedVoteMessage], checkpoint: Checkpoint, node_state: NodeState) -> PSet[NodeIdentity]:
+def get_validators_in_FFG_support_of_checkpoint_justification(votes: PSet[SignedVoteMessage], checkpoint: Checkpoint, node_state: CommonNodeState) -> PSet[NodeIdentity]:
     """
     It identifies and returns the set of validators that have cast `votes` in support of the justification of a specified `checkpoint`.
     """
@@ -100,7 +100,7 @@ def get_validators_in_FFG_support_of_checkpoint_justification(votes: PSet[Signed
     )
 
 
-def is_justified_checkpoint(checkpoint: Checkpoint, node_state: NodeState) -> bool:
+def is_justified_checkpoint(checkpoint: Checkpoint, node_state: CommonNodeState) -> bool:
     """
     It checks whether a `checkpoint` if justified, specifically a `checkpoint` is justified if at least
     two-thirds of the total validator set weight is in support. This is evaluated by checking if
@@ -120,8 +120,45 @@ def is_justified_checkpoint(checkpoint: Checkpoint, node_state: NodeState) -> bo
 
         return FFG_support_weight * 3 >= tot_validator_set_weight * 2
 
+def filter_out_non_justified_checkpoint(checkpoints: PSet[Checkpoint], node_state: CommonNodeState) -> PSet[Checkpoint]:
+    """
+    It filters out `checkpoints` that are not justified.
+    """
+    return pset_filter(lambda checkpoint: is_justified_checkpoint(checkpoint, node_state.common), checkpoints)
 
-def is_FFG_vote_linking_to_a_checkpoint_in_next_slot(vote: SignedVoteMessage, checkpoint: Checkpoint, node_state: NodeState) -> bool:
+
+def get_justified_checkpoints(node_state: CommonNodeState) -> PSet[Checkpoint]:
+    """
+    It retrieves all the justified checkpoints from a `note_state`. First it extracts all ffg target checkpoints from
+    the set of votes in the `node_state`. Then it filter out these checkpoints to keep only those that are justified.
+    The `genesis_checkpoint` is automatically considered justified.
+    """
+    return pset_add(
+        filter_out_non_justified_checkpoint(get_set_FFG_targets(node_state.view_votes), node_state),
+        genesis_checkpoint(node_state.common)
+    )
+
+
+def get_greatest_justified_checkpoint(node_state: CommonNodeState) -> Checkpoint:
+    """
+    It retrieves the greatest justified checkpoint from a `node_state`.
+    """
+    return pset_max(
+        get_justified_checkpoints(node_state),
+        lambda c: (c.chkp_slot, c.block_slot)
+    )
+
+
+def filter_out_blocks_non_ancestor_of_block(block: Block, blocks: PSet[Block], node_state: CommonNodeState) -> PSet[Block]:
+    """
+    It filters a set of `blocks`, retaining only those that are ancestors of a specified `block`.
+    """
+    return pset_filter(
+        lambda b: is_ancestor_descendant_relationship(b, block, node_state.common),
+        blocks
+    )
+
+def is_FFG_vote_linking_to_a_checkpoint_in_next_slot(vote: SignedVoteMessage, checkpoint: Checkpoint, node_state: CommonNodeState) -> bool:
     """
     It evaluates whether a given `vote` represents a link from a specified `checkpoint` to a checkpoint in the immediately following slot.
     """
@@ -132,7 +169,7 @@ def is_FFG_vote_linking_to_a_checkpoint_in_next_slot(vote: SignedVoteMessage, ch
     )
 
 
-def filter_out_FFG_vote_not_linking_to_a_checkpoint_in_next_slot(checkpoint: Checkpoint, node_state: NodeState) -> PSet[SignedVoteMessage]:
+def filter_out_FFG_vote_not_linking_to_a_checkpoint_in_next_slot(checkpoint: Checkpoint, node_state: CommonNodeState) -> PSet[SignedVoteMessage]:
     """
     It filters and retains only those votes from a `node_state` that are linking to a `checkpoint` in the next slot.
     """
@@ -149,7 +186,7 @@ def get_validators_in_FFG_votes_linking_to_a_checkpoint_in_next_slot(checkpoint:
     )
 
 
-def is_finalized_checkpoint(checkpoint: Checkpoint, node_state: NodeState) -> bool:
+def is_finalized_checkpoint(checkpoint: Checkpoint, node_state: CommonNodeState) -> bool:
     """
     It evaluates whether a given `checkpoint` has been finalized. A `checkpoint` is considered finalized if it is justified and
     if at least two-thirds of the total validator set's weight supports the transition from this `checkpoint` to the next. Specifically, it first checks if the `checkpoint` is justified using
@@ -168,14 +205,14 @@ def is_finalized_checkpoint(checkpoint: Checkpoint, node_state: NodeState) -> bo
     return FFG_support_weight * 3 >= tot_validator_set_weight * 2
 
 
-def filter_out_non_finalized_checkpoint(checkpoints: PSet[Checkpoint], node_state: NodeState) -> PSet[Checkpoint]:
+def filter_out_non_finalized_checkpoint(checkpoints: PSet[Checkpoint], node_state: CommonNodeState) -> PSet[Checkpoint]:
     """
     It filters out non finalized `checkpoints` from a `node_state`.
     """
     return pset_filter(lambda checkpoint: is_finalized_checkpoint(checkpoint, node_state), checkpoints)
 
 
-def get_finalized_checkpoints(node_state: NodeState) -> PSet[Checkpoint]:
+def get_finalized_checkpoints(node_state: CommonNodeState) -> PSet[Checkpoint]:
     """
     It retrieves from `node_state` all the checkpoints that have been finalized.
     """
@@ -185,7 +222,7 @@ def get_finalized_checkpoints(node_state: NodeState) -> PSet[Checkpoint]:
     )
 
 
-def get_greatest_finalized_checkpoint(node_state: NodeState) -> Checkpoint:
+def get_greatest_finalized_checkpoint(node_state: CommonNodeState) -> Checkpoint:
     """
     It returns the greatest finalized checkpoint from a `node_state`.
     """
