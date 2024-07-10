@@ -38,14 +38,20 @@ This section provides a quick overview of some of the most significant differenc
 
 ## How to Read the Specification
 
-### Files
+### Directories
 
-- `3sf_high_level.py` is the "entry" point of the specification. It includes all the event handlers and the functions specifying the external view of the state of a node (more on this below).
-- `helpers.py` contains all of the helper functions used by `3sf_high_level.py`.
-- `data_structures.py` contains all the data structure definitions.
-- `stubs.pyi` contains functions that have not yet been defined.
-- `formal_verification_annotations.py` includes the definition of all the annotations used to aid the formal verification of this specification.
-- `pythonic_code_generic.py` is reserved for code heavily reliant on Python syntax and semantics. More on this [below](#hard-rules).
+- `protocols` contains files specific to various variants of the 3SF protocol for Ethereum.
+  - `rlmd` contains files specific to the RLMD-based variant of the 3SF protocol
+    - `3sf_high_level.py` is the "entry" point of the RLMD-based specification. It includes all the event handlers and the functions specifying the external view of the state of a node (more on this below).
+    - `helpers.py` contains all of the helper functions used by `3sf_high_level.py`.
+    - `data_structures.py` contains data structure definitions specific to the RLMD-based version of the 3SF protocol
+- `common` contains definitions that are shared by the various variants of the 3SF protocol.
+  - `ffg.py` contains the main logic for computing the finalized chain.
+  - `helpers.py` contains helper functions shared by the various 3SF protocols.
+  - `data_structures.py` contains the definition of data structures shared by the various 3SF protocols.
+  - `stubs.pyi` contains functions that have not yet been defined.
+  - `formal_verification_annotations.py` includes the definition of all the annotations used to aid the formal verification of this specification.
+  - `pythonic_code_generic.py` is reserved for code heavily reliant on Python syntax and semantics. More on this [below](#hard-rules).
 
 ### Event Handlers
 

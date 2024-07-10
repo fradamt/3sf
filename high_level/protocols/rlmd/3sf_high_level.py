@@ -1,7 +1,7 @@
-from ..common.data_structures import *
-from ..common.formal_verification_annotations import *
-from ..common.pythonic_code_generic import *
-from ..common.stubs import *
+from ...common.data_structures import *
+from ...common.formal_verification_annotations import *
+from ...common.pythonic_code_generic import *
+from ...common.stubs import *
 from .helpers import *
 
 # @Init

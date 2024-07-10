@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pyrsistent import PRecord, field, PSet, PMap, PVector
 from enum import Enum
-from ..common.data_structures import *
+from ...common.data_structures import *
 
 
 class NodeState(PRecord):

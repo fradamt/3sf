@@ -1,6 +1,6 @@
 from .data_structures import *
 from .formal_verification_annotations import *
-from .common import is_complete_chain
+from .helpers import is_complete_chain
 
 
 def block_hash(block: Block) -> Hash:
