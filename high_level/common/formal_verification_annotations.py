@@ -1,19 +1,19 @@
 from typing import TypeVar, Optional, Callable, ParamSpec, NoReturn
 
-C = TypeVar("C", bound=Callable)
-
+TP = ParamSpec('TP')
+TR = TypeVar('TR')
 
 def Requires(expr: bool) -> None:
     pass
 
 
-def Init(c: C) -> C:
+def Init(c: Callable[TP, TR]) -> Callable[TP, TR]:
     return c
 
 
-def Event(c: C) -> C:
+def Event(c: Callable[TP, TR]) -> Callable[TP, TR]:
     return c
 
 
-def View(c: C) -> C:
+def View(c: Callable[TP,TR]) -> Callable[TP,TR]:
     return c

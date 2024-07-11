@@ -1,4 +1,4 @@
-from typing import TypeVar
+from typing import TypeVar, Iterable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -35,7 +35,8 @@ def pset_merge(a: PSet[T1], b: PSet[T1]) -> PSet[T1]:
 def pset_merge_flatten(s: PSet[PSet[T1]]) -> PSet[T1]:
     return reduce(
         lambda a, b: a.union(b),
-        s
+        s,
+        pset()
     )
 
 
