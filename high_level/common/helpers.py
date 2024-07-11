@@ -131,3 +131,20 @@ def filter_out_blocks_non_ancestor_of_block(block: Block, blocks: PSet[Block], n
         lambda b: is_ancestor_descendant_relationship(b, block, node_state),
         blocks
     )
+
+
+def have_common_ancestor(chain1: Block, chain2: Block, node_state: CommonNodeState) -> bool:
+    if is_ancestor_descendant_relationship(chain1, chain2, node_state):
+        return True
+    elif has_parent(chain1, node_state):
+        return have_common_ancestor(get_parent(chain1, node_state), chain2, node_state)
+    else:
+        return False
+
+
+def are_conflicting(chain1: Block, chain2: Block, node_state: CommonNodeState) -> bool:
+    Requires(have_common_ancestor(chain1, chain2, node_state))
+    return (
+        (not is_ancestor_descendant_relationship(chain1, chain2, node_state) and
+         (not is_ancestor_descendant_relationship(chain2, chain1, node_state)))
+    )
