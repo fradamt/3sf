@@ -34,8 +34,8 @@ def on_tick(node_state: NodeState, time: int) -> NewNodeStateAndMessagesToTx:
     new_slot = get_slot_from_time(time, node_state)
     new_phase = get_phase_from_time(time, node_state)
 
-    if new_slot != node_state.current_slot or new_phase != node_state.current_phase:
-        node_state = node_state.set(current_slot=new_slot)
+    if new_slot != node_state.common.current_slot or new_phase != node_state.current_phase:
+        node_state = node_state.set(common=node_state.common.set(current_slot=new_slot))
         node_state = node_state.set(current_phase=new_phase)
 
         if node_state.current_phase == NodePhase.PROPOSE:
@@ -63,7 +63,7 @@ def on_propose(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
     """
     proposer = get_proposer(node_state.common)
 
-    if proposer == node_state.identity:
+    if proposer == node_state.common.identity:
         node_state = execute_view_merge(node_state)
 
         signed_propose = sign_propose_message(
@@ -110,31 +110,31 @@ def on_vote(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
 
     bcand = pset_max(s_cand, lambda b: b.slot)
 
-    k_deep_block = get_block_k_deep(ch, node_state.configuration.k, node_state)
+    k_deep_block = get_block_k_deep(ch, node_state.common.configuration.k, node_state)
 
     if not (
-        is_ancestor_descendant_relationship(bcand, node_state.chava, node_state.common) and
-        is_ancestor_descendant_relationship(k_deep_block, node_state.chava, node_state.common)
+        is_ancestor_descendant_relationship(bcand, node_state.common.chava, node_state.common) and
+        is_ancestor_descendant_relationship(k_deep_block, node_state.common.chava, node_state.common)
     ):
         node_state = node_state.set(
-            chAva=pset_max(
+            common=node_state.common.set(chava=pset_max(
                 pset_merge(
                     pset_get_singleton(bcand),
                     pset_get_singleton(k_deep_block)
                 ),
                 lambda b: b.slot
             )
-        )
+        ))
 
     signedVoteMessage = sign_vote_message(
         VoteMessage(
-            slot=node_state.current_slot,
+            slot=node_state.common.current_slot,
             head_hash=block_hash(get_head(node_state)),
             ffg_source=get_greatest_justified_checkpoint(node_state.common),
             ffg_target=Checkpoint(
-                block_hash=block_hash(node_state.chava),
-                chkp_slot=node_state.current_slot,
-                block_slot=node_state.chava.slot
+                block_hash=block_hash(node_state.common.chava),
+                chkp_slot=node_state.common.current_slot,
+                block_slot=node_state.common.chava.slot
             )
         ),
         node_state.common
@@ -193,10 +193,11 @@ def on_received_propose(propose: SignedProposeMessage, node_state: NodeState) ->
 
     if node_state.current_phase == NodePhase.PROPOSE:  # Is this Ok or do we need to also include 4\Delta t + \Delta ?
         node_state = node_state.set(
-            view_vote=pset_merge(
-                node_state.view_votes,
-                from_pvector_to_pset(propose.message.proposer_view))
-        )
+            common=node_state.common.set(
+                view_votes=pset_merge(
+                    node_state.common.view_votes,
+                    from_pvector_to_pset(propose.message.proposer_view))
+        ))
 
     return NewNodeStateAndMessagesToTx(
         state=node_state,
@@ -229,7 +230,7 @@ def on_vote_received(vote: SignedVoteMessage, node_state: NodeState) -> NewNodeS
     """
     return NewNodeStateAndMessagesToTx(
         state=node_state.set(
-            buffer_vote=pset_add(
+            buffer_votes=pset_add(
                 node_state.buffer_votes,
                 vote
             )
@@ -259,6 +260,6 @@ def available_chain(node_state: NodeState) -> PVector[Block]:
     The available chain `node_state.chava` is the chain output by the dynamically available component of the protocol.
     """
     return get_blockchain(
-        node_state.chava,
+        node_state.common.chava,
         node_state.common
     )

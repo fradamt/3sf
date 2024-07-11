@@ -33,11 +33,7 @@ def pset_merge(a: PSet[T1], b: PSet[T1]) -> PSet[T1]:
 
 
 def pset_merge_flatten(s: PSet[PSet[T1]]) -> PSet[T1]:
-    return reduce(
-        lambda a, b: a.union(b),
-        s,
-        pset()
-    )
+    return reduce(pset_merge, s, pset())
 
 
 print(pset_merge_flatten(pset([pset([1, 2]), pset([2, 3])])))

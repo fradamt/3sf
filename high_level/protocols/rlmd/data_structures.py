@@ -9,6 +9,7 @@ class NodeState(PRecord):
     current_phase: NodePhase = field(type=NodePhase)
     buffer_votes: PSet[SignedVoteMessage] = field()
     buffer_blocks: PMap[Hash, Block] = field()
+    s_cand: PSet[Block] = field()
 
 
 @dataclass(frozen=True)

@@ -125,7 +125,7 @@ def filter_out_non_justified_checkpoint(checkpoints: PSet[Checkpoint], node_stat
     """
     It filters out `checkpoints` that are not justified.
     """
-    return pset_filter(lambda checkpoint: is_justified_checkpoint(checkpoint, node_state.common), checkpoints)
+    return pset_filter(lambda checkpoint: is_justified_checkpoint(checkpoint, node_state), checkpoints)
 
 
 def get_justified_checkpoints(node_state: CommonNodeState) -> PSet[Checkpoint]:
@@ -136,7 +136,7 @@ def get_justified_checkpoints(node_state: CommonNodeState) -> PSet[Checkpoint]:
     """
     return pset_add(
         filter_out_non_justified_checkpoint(get_set_FFG_targets(node_state.view_votes), node_state),
-        genesis_checkpoint(node_state.common)
+        genesis_checkpoint(node_state)
     )
 
 
@@ -155,7 +155,7 @@ def filter_out_blocks_non_ancestor_of_block(block: Block, blocks: PSet[Block], n
     It filters a set of `blocks`, retaining only those that are ancestors of a specified `block`.
     """
     return pset_filter(
-        lambda b: is_ancestor_descendant_relationship(b, block, node_state.common),
+        lambda b: is_ancestor_descendant_relationship(b, block, node_state),
         blocks
     )
 
@@ -178,7 +178,7 @@ def filter_out_FFG_vote_not_linking_to_a_checkpoint_in_next_slot(checkpoint: Che
     return pset_filter(lambda vote: is_FFG_vote_linking_to_a_checkpoint_in_next_slot(vote, checkpoint, node_state), node_state.view_votes)
 
 
-def get_validators_in_FFG_votes_linking_to_a_checkpoint_in_next_slot(checkpoint: Checkpoint, node_state) -> PSet[NodeIdentity]:
+def get_validators_in_FFG_votes_linking_to_a_checkpoint_in_next_slot(checkpoint: Checkpoint, node_state: CommonNodeState) -> PSet[NodeIdentity]:
     """
     It retrieves the identities of validators who have cast ffg votes that support linking a specified `checkpoint` to its immediate successor.
     """
