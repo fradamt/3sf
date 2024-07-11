@@ -102,3 +102,32 @@ def get_blockchain(block: Block, node_state: CommonNodeState) -> PVector[Block]:
             pvector_of_one_element(block),
             get_blockchain(get_parent(block, node_state), node_state)
         )
+
+
+def is_ancestor_descendant_relationship(ancestor: Block, descendant: Block, node_state: CommonNodeState) -> bool:
+    """
+    It determines whether there is an ancestor-descendant relationship between two blocks.
+    """
+    if ancestor == descendant:
+        return True
+    elif descendant == node_state.configuration.genesis:
+        return False
+    else:
+        return (
+            has_parent(descendant, node_state) and
+            is_ancestor_descendant_relationship(
+                ancestor,
+                get_parent(descendant, node_state),
+                node_state
+            )
+        )
+
+
+def filter_out_blocks_non_ancestor_of_block(block: Block, blocks: PSet[Block], node_state: CommonNodeState) -> PSet[Block]:
+    """
+    It filters a set of `blocks`, retaining only those that are ancestors of a specified `block`.
+    """
+    return pset_filter(
+        lambda b: is_ancestor_descendant_relationship(b, block, node_state),
+        blocks
+    )

@@ -7,25 +7,6 @@ from .helpers import *
 from .stubs import *
 
 
-def is_ancestor_descendant_relationship(ancestor: Block, descendant: Block, node_state: CommonNodeState) -> bool:
-    """
-    It determines whether there is an ancestor-descendant relationship between two blocks.
-    """
-    if ancestor == descendant:
-        return True
-    elif descendant == node_state.configuration.genesis:
-        return False
-    else:
-        return (
-            has_parent(descendant, node_state) and
-            is_ancestor_descendant_relationship(
-                ancestor,
-                get_parent(descendant, node_state),
-                node_state
-            )
-        )
-
-
 def get_set_FFG_targets(votes: PSet[SignedVoteMessage]) -> PSet[Checkpoint]:
     """
     It extracts a set of ffg targets from a set of `votes`.
@@ -147,16 +128,6 @@ def get_greatest_justified_checkpoint(node_state: CommonNodeState) -> Checkpoint
     return pset_max(
         get_justified_checkpoints(node_state),
         lambda c: (c.chkp_slot, c.block_slot)
-    )
-
-
-def filter_out_blocks_non_ancestor_of_block(block: Block, blocks: PSet[Block], node_state: CommonNodeState) -> PSet[Block]:
-    """
-    It filters a set of `blocks`, retaining only those that are ancestors of a specified `block`.
-    """
-    return pset_filter(
-        lambda b: is_ancestor_descendant_relationship(b, block, node_state),
-        blocks
     )
 
 
