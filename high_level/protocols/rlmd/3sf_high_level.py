@@ -124,7 +124,7 @@ def on_vote(node_state: NodeState) -> NewNodeStateAndMessagesToTx:
                 ),
                 lambda b: b.slot
             )
-        ))
+            ))
 
     signedVoteMessage = sign_vote_message(
         VoteMessage(
@@ -197,7 +197,7 @@ def on_received_propose(propose: SignedProposeMessage, node_state: NodeState) ->
                 view_votes=pset_merge(
                     node_state.common.view_votes,
                     from_pvector_to_pset(propose.message.proposer_view))
-        ))
+            ))
 
     return NewNodeStateAndMessagesToTx(
         state=node_state,
