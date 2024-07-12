@@ -115,7 +115,7 @@ def pmap_set(pm: PMap[T1, T2], k: T1, v: T2) -> PMap[T1, T2]:
 
 
 def pmap_merge(a: PMap[T1, T2], b: PMap[T1, T2]) -> PMap[T1, T2]:
-    return cast(PMap[T1, T2], a.update(b))
+    return a.update(b)
 
 
 def pmap_keys(d: PMap[T1, T2]) -> PSet[T1]:
