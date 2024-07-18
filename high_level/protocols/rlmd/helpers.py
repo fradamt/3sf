@@ -175,7 +175,7 @@ def get_votes_included_in_blockchain(block: Block, node_state: NodeState) -> PSe
 
 def get_votes_included_in_blocks(blocks: PSet[Block]) -> PSet[SignedVoteMessage]:
     return pset_merge_flatten(
-        pset_map(
+        pset_map_to_pset(
             lambda b: b.votes,
             blocks
         )
@@ -238,8 +238,8 @@ def get_GHOST_weight(block: Block, votes: PSet[SignedVoteMessage], node_state: N
     The GHOST weight of a `block` is determined by the total stake supporting the branch that ends with this `block` as its tip.
     Validators vote with associated stakes, and the collective stake behind these votes establishes the block's GHOST weight.
     """
-    return pset_sum(
-        pset_map(
+    return pvector_sum(
+        pset_map_to_pvector(
             lambda vote: validatorBalances[vote.sender],
             pset_filter(
                 lambda vote:

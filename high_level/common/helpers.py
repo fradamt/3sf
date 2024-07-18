@@ -78,8 +78,8 @@ def validator_set_weight(validators: PSet[NodeIdentity], validatorBalances: Vali
     """
     It calculates the total weight (or sum of `validatorBalances`) of a specified set of `validators` within a blockchain.
     """
-    return pset_sum(
-        pset_map(
+    return pvector_sum(
+        pset_map_to_pvector(
             lambda v: pmap_get(validatorBalances, v),
             pset_intersection(
                 pmap_keys(validatorBalances),

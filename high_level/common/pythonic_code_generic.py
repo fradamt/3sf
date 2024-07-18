@@ -76,10 +76,6 @@ def pset_max(s: PSet[T1], a: Callable[[T1], SupportsRichComparison]) -> T1:
     return max(s, key=a)
 
 
-def pset_sum(s: PSet[int]) -> int:
-    return sum(s)
-
-
 def pset_is_empty(s: PSet[T1]) -> bool:
     return len(s) == 0
 
@@ -88,13 +84,26 @@ def from_pvector_to_pset(v: PVector[T1]) -> PSet[T1]:
     return pset(v)
 
 
-def pset_map(p: Callable[[T1], T2], s: PSet[T1]) -> PSet[T2]:
+def pset_map_to_pset(p: Callable[[T1], T2], s: PSet[T1]) -> PSet[T2]:
     r: PSet[T2] = pset()
 
     for e in s:
         r = r.add(p(e))
 
     return r
+
+
+def pset_map_to_pvector(p: Callable[[T1], T2], s: PSet[T1]) -> PVector[T2]:
+    r: PVector[T2] = pvector()
+
+    for e in s:
+        r = r.append(p(e))
+
+    return r
+
+
+def pvector_sum(s: PVector[int]) -> int:
+    return sum(s)
 
 
 def pmap_has(pm: PMap[T1, T2], k: T1) -> bool:

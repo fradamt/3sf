@@ -11,7 +11,7 @@ def get_set_FFG_targets(votes: PSet[SignedVoteMessage]) -> PSet[Checkpoint]:
     """
     It extracts a set of ffg targets from a set of `votes`.
     """
-    return pset_map(
+    return pset_map_to_pset(
         lambda vote: vote.message.ffg_target,
         votes
     )
@@ -75,7 +75,7 @@ def get_validators_in_FFG_support_of_checkpoint_justification(votes: PSet[Signed
     """
     It identifies and returns the set of validators that have cast `votes` in support of the justification of a specified `checkpoint`.
     """
-    return pset_map(
+    return pset_map_to_pset(
         lambda vote: vote.sender,
         filter_out_FFG_votes_not_in_FFG_support_of_checkpoint_justification(votes, checkpoint, node_state)
     )
@@ -153,7 +153,7 @@ def get_validators_in_FFG_votes_linking_to_a_checkpoint_in_next_slot(checkpoint:
     """
     It retrieves the identities of validators who have cast ffg votes that support linking a specified `checkpoint` to its immediate successor.
     """
-    return pset_map(
+    return pset_map_to_pset(
         lambda vote: vote.sender,
         filter_out_FFG_vote_not_linking_to_a_checkpoint_in_next_slot(checkpoint, node_state)
     )
@@ -241,5 +241,5 @@ def is_slashable_node(node: NodeIdentity, vote1: SignedVoteMessage, vote2: Signe
 
 
 def get_slashabe_nodes(vote_view: PSet[SignedVoteMessage]) -> PSet[NodeIdentity]:
-    return pset_map(lambda vote: vote.sender,
-                    pset_filter(lambda vote1: not pset_is_empty(pset_filter(lambda vote2: is_slashable_offence(vote1, vote2), vote_view)), vote_view))
+    return pset_map_to_pset(lambda vote: vote.sender,
+                            pset_filter(lambda vote1: not pset_is_empty(pset_filter(lambda vote2: is_slashable_offence(vote1, vote2), vote_view)), vote_view))
