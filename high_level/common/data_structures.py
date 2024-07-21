@@ -84,21 +84,13 @@ class Configuration():
     k: int
 
 
-class NodeState(PRecord):
+class CommonNodeState(PRecord):
     configuration: Configuration = field(type=Configuration)
     identity: NodeIdentity = field(type=NodeIdentity)
     current_slot: int = field(type=int)
-    current_phase: NodePhase = field(type=NodePhase)
     view_blocks: PMap[Hash, Block] = field()  # Using field(type=dict[Hash,Block]) raises a max stack depth rec. error in execution. Same for sets below
     view_votes: PSet[SignedVoteMessage] = field()
-    buffer_votes: PSet[SignedVoteMessage] = field()
-    buffer_blocks: PMap[Hash, Block] = field()
-    s_cand: PSet[Block] = field()
     chava: Block = field()
 
 
-@dataclass(frozen=True)
-class NewNodeStateAndMessagesToTx:
-    state: NodeState
-    proposeMessagesToTx: PSet[SignedProposeMessage]
-    voteMessagesToTx: PSet[SignedVoteMessage]
+BlockView = PMap[Hash, Block]

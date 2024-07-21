@@ -1,7 +1,11 @@
-from typing import TypeVar
+from typing import TypeVar, Iterable, cast
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparison
 
 from pyrsistent import PSet, PMap, PVector, pset, pmap, pvector
-from formal_verification_annotations import *
+from .formal_verification_annotations import *
 from functools import reduce
 
 T1 = TypeVar('T1')
@@ -29,10 +33,10 @@ def pset_merge(a: PSet[T1], b: PSet[T1]) -> PSet[T1]:
 
 
 def pset_merge_flatten(s: PSet[PSet[T1]]) -> PSet[T1]:
-    return reduce(
-        lambda a, b: a.union(b),
-        pset()
-    )
+    return reduce(pset_merge, s, pset())
+
+
+print(pset_merge_flatten(pset([pset([1, 2]), pset([2, 3])])))
 
 
 def pset_intersection(s1: PSet[T1], s2: PSet[T1]) -> PSet[T1]:
@@ -67,13 +71,9 @@ def pset_filter(p: Callable[[T1], bool], s: PSet[T1]) -> PSet[T1]:
     # return pset(filter(p, s))
 
 
-def pset_max(s: PSet[T1], a: Callable[[T1], int]) -> T1:
+def pset_max(s: PSet[T1], a: Callable[[T1], SupportsRichComparison]) -> T1:
     Requires(len(s) > 0)
     return max(s, key=a)
-
-
-def pset_sum(s: PSet[int]) -> int:
-    return sum(s)
 
 
 def pset_is_empty(s: PSet[T1]) -> bool:
@@ -84,13 +84,26 @@ def from_pvector_to_pset(v: PVector[T1]) -> PSet[T1]:
     return pset(v)
 
 
-def pset_map(p: Callable[[T1], T2], s: PSet[T1]) -> PSet[T2]:
+def pset_map_to_pset(p: Callable[[T1], T2], s: PSet[T1]) -> PSet[T2]:
     r: PSet[T2] = pset()
 
     for e in s:
         r = r.add(p(e))
 
     return r
+
+
+def pset_map_to_pvector(p: Callable[[T1], T2], s: PSet[T1]) -> PVector[T2]:
+    r: PVector[T2] = pvector()
+
+    for e in s:
+        r = r.append(p(e))
+
+    return r
+
+
+def pvector_sum(s: PVector[int]) -> int:
+    return sum(s)
 
 
 def pmap_has(pm: PMap[T1, T2], k: T1) -> bool:
